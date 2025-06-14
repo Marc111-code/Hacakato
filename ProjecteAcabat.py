@@ -81,11 +81,9 @@ class ScapeRoomApp(tk.Tk):
         self.score = 0
         self.guardar_dades({"nom": self.nom_jugador, "punts": self.score, "nivell": 1})
 
-        # Ocultar botones menú
         self.boto_nova_partida.pack_forget()
         self.boto_sortir.pack_forget()
 
-        # Mostrar historia
         self.estat_joc = "historia"
         self.mostrar_historia()
 
@@ -102,8 +100,6 @@ I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
         self.text_label.config(text=text_historia.strip())
         self.entry_resposta.pack_forget()
         self.boto_confirmar.pack_forget()
-
-        # Botón para continuar a problema1
         self.boto_continuar = tk.Button(self, text="Començar", command=self.problema1)
         self.boto_continuar.pack(pady=10)
 
@@ -120,7 +116,6 @@ I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
         self.entry_resposta.pack()
         self.boto_confirmar.pack()
 
-        # Si hi ha botó continuar, eliminar-lo
         if hasattr(self, 'boto_continuar'):
             self.boto_continuar.destroy()
 
@@ -152,7 +147,7 @@ I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
         ))
         self.entry_resposta.delete(0, tk.END)
         self.intents_historia = 1
-        self.etapa_historia = "america"  # Seguim la pregunta 2 després
+        self.etapa_historia = "america"  
 
     def problema4(self):
         self.estat_joc = "problema4"
@@ -196,7 +191,7 @@ I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
                     messagebox.showwarning("Pista", pista)
                 else:
                     messagebox.showwarning("Incorrecte", "No és correcte i no hi ha més pistes.")
-                self.score += 0  # No sumar punts per intentar erroni
+                self.score += 0 
                 self.guardar_puntuacio()
 
         elif self.estat_joc == "problema3":
@@ -275,7 +270,9 @@ I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
 {self.nom_jugador} surt corrents de la casa, feliç per haver aconseguit sortir sencer d'allà.
 Corre pel bosc i aconsegueix trobar-se amb els seus amics, que l'estaven buscant.
 Fi.
+Has aconseguit {self.score} punts!
 """
+               
         self.mostrar_imatge(None)
         self.text_label.config(text=text.strip())
         boto_sortir_final = tk.Button(self, text="Sortir", command=self.destroy)
