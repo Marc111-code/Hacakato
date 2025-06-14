@@ -15,9 +15,7 @@ class ScapeRoomApp(tk.Tk):
         self.score = 0
         self.nom_jugador = ""
         self.game_id = None
-        self.estat_joc = "menu"  # menu, historia, problema1,... problema5
-
-        # Frame para imagen y texto
+        self.estat_joc = "menu"  
         self.frame_imatge = tk.Label(self)
         self.frame_imatge.pack(pady=10)
 
@@ -32,16 +30,10 @@ class ScapeRoomApp(tk.Tk):
 
         self.boto_nova_partida = tk.Button(self, text="Nova Partida", command=self.iniciar_nova_partida)
         self.boto_sortir = tk.Button(self, text="Sortir", command=self.destroy)
-
-        # Botones menú
         self.boto_nova_partida.pack(side="left", padx=20, pady=20)
         self.boto_sortir.pack(side="right", padx=20, pady=20)
-
-        # Cargar imágenes
         self.imatges = {}
         self.carregar_imatges()
-
-        # Ocultamos controles de respuesta al principio
         self.entry_resposta.pack_forget()
         self.boto_confirmar.pack_forget()
 
@@ -94,7 +86,7 @@ Va trobar una petita casa de fusta i va decidir entrar a buscar ajuda.
 Va picar a la porta, però va veure que era oberta.
 Va entrar amb una mica de por.
 Tot era fosc, i just quan va posar els dos peus a dins, la porta es va tancar a la seva esquena.
-I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
+I, ara tu has de ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
 """
         self.mostrar_imatge("intro")
         self.text_label.config(text=text_historia.strip())
