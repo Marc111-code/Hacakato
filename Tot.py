@@ -8,10 +8,18 @@ import random
 NOM_FITXER = "jugador.json"
 POST_URL = "https://fun.codelearn.cat/hackathon/game/store_progress"
 
-
 enviant_progres = False
+score = 0
 
-score = 0 
+
+def actualitzar_puntuacio():
+    if os.path.exists(NOM_FITXER):
+        with open(NOM_FITXER, "r") as f:
+            dades = json.load(f)
+        dades["punts"] = score
+        with open(NOM_FITXER, "w") as f:
+            json.dump(dades, f)
+
 
 def mostrar_menu():
     print("\n   SCAPE ROOM")
@@ -36,13 +44,11 @@ def problema1():
     else:
         while resposta != "5":
             print("Torna a intentar!")
-            print("Quin és el resultat de fer la meitat del doble de 12, més 8, dividit per 4?")
             resposta = input("Resposta: ")
         print("Molt Bé")
         score += 1
     print("Passes a la següent sala")
-    
-
+    actualitzar_puntuacio()
 
 
 def problema2():
@@ -52,7 +58,7 @@ def problema2():
         "Comença amb la lletra 'o'.",
         "Té la lletra 'b' al mig.",
         "Acaba amb la lletra 'a'.",
-        "Es relaciona amb la llum i la foscor.",    
+        "Es relaciona amb la llum i la foscor.",
     ]
     print("""
     Sóc una paraula de 5 lletres.
@@ -60,18 +66,16 @@ def problema2():
     Si treus la segona lletra, també.
     Fins i tot si només queda una lletra, la paraula segueix sent la mateixa.
     Quina paraula sóc?""")
-    
+
     resposta = input("Resposta: ")
     intents = 1
     while resposta.lower() != "ombra":
         if len(pistes) > 0:
-            print("Incorrecte, aquí tens una pista: ")
             pista = random.choice(pistes)
             print("Pista:", pista)
             pistes.remove(pista)
         else:
-            print("No es això. ")
-            print("No hi ha més pistes disponibles")
+            print("No es això. No hi ha més pistes disponibles")
         resposta = input("Resposta: ")
         intents += 1
 
@@ -81,11 +85,13 @@ def problema2():
     else:
         print("Molt bé, passes a la següent sala!")
         score += 1
+    actualitzar_puntuacio()
+
 
 def problema3():
     global score
     print("Heu entrat a la sala d'història")
-    
+
     resposta = input("Sabeu quin any es va descobrir Amèrica, quin? ")
     intents = 1
     while resposta != "1492":
@@ -113,40 +119,44 @@ def problema3():
         score += 1
 
     print("Ara passaràs a la següent sala")
-    
+    actualitzar_puntuacio()
+
+
 def problema4():
     global score
     print("Quin gas és el més abundant a l’atmosfera terrestre?")
     resposta = input("Resposta: ")
-    if resposta in ["nitrogen", "Nitrogen", "NITROGEN"]:
+    if resposta.lower() == "nitrogen":
         print("Mare meva que bo!")
         score += 3
-        print("Passes a la ultima sala")
     else:
-        while resposta not in ["nitrogen", "Nitrogen", "NITROGEN"]:
+        while resposta.lower() != "nitrogen":
             print("Torna a intentar!")
             resposta = input("Resposta: ")
         print("Molt Bé")
-        print("Passes a la última sala")
         score += 1
+
+    print("Passes a la última sala")
+    actualitzar_puntuacio()
 
 
 def problema5():
     global score
     print("Quin planeta és conegut com el planeta vermell?")
     resposta = input("Resposta: ")
-    if resposta in ["mart", "Mart", "MART"]:
-        print("Super Bè")
+    if resposta.lower() == "mart":
+        print("Super Bé")
         print("Has aconseguit escapar!")
-
         score += 3
     else:
-        while resposta not in ["Mart", "MART", "mart"]:
+        while resposta.lower() != "mart":
             print("Torna a intentar!")
             resposta = input("Resposta: ")
         print("Molt Bé")
         print("Has aconseguit escapar!")
         score += 1
+    actualitzar_puntuacio()
+
 
 def enviar_progress(game_id, dades_partida):
     cos = {
@@ -154,21 +164,16 @@ def enviar_progress(game_id, dades_partida):
         "data": dades_partida
     }
     try:
-        resposta = requests.post(POST_URL, json=cos)
-        if resposta.status_code == 200:
-            print(f"")
-
+        requests.post(POST_URL, json=cos)
     except requests.exceptions.RequestException as e:
         print(f" Error de connexió enviant progrés: {e}")
-        
+
 
 def loop_enviar_progress(game_id):
-    
     global enviant_progres
     enviant_progres = True
 
     while enviant_progres:
-        
         if os.path.exists(NOM_FITXER):
             with open(NOM_FITXER, "r") as f:
                 dades_partida = json.load(f)
@@ -176,16 +181,13 @@ def loop_enviar_progress(game_id):
             dades_partida = {}
 
         enviar_progress(game_id, dades_partida)
-
-        
         espera = random.randint(5, 10)
         time.sleep(espera)
+
 
 def iniciar_nova_partida():
     nom = input(" Introdueix el teu nom: ").strip()
     print(f"\n Iniciant nova partida per {nom}...")
-    
-    
 
     dades_jugador = {
         "nom": nom,
@@ -193,7 +195,6 @@ def iniciar_nova_partida():
         "nivell": 1
     }
 
-    
     with open(NOM_FITXER, "w") as f:
         json.dump(dades_jugador, f)
 
@@ -204,63 +205,49 @@ def iniciar_nova_partida():
         if resposta.status_code == 200:
             dades = resposta.json()
             print(" Nova partida iniciada correctament.")
-            
+
             mostrar_historia(nom)
 
-            
-            game_id = dades.get("game_id")
-            if not game_id:
-                game_id = 999999
-                
-           
+            game_id = dades.get("game_id", 999999)
 
-            
             fil = threading.Thread(target=loop_enviar_progress, args=(game_id,), daemon=True)
             fil.start()
 
             problema1()
-            
             problema2()
-            
             problema3()
-            
             problema4()
-            
             problema5()
 
-            
             global enviant_progres
             enviant_progres = False
             fil.join()
-            
-            finalitzar_partida(game_id,nom)
 
+            finalitzar_partida(game_id, nom)
         else:
             print(f"Error en iniciar la partida. Codi: {resposta.status_code}")
     except requests.exceptions.RequestException as e:
         print(f" Error de connexió: {e}")
 
 
-
 def mostrar_historia(nom):
     historia = f"""
-    Un dia {nom} estava acampant amb els seus amics al bosc. Tots van decidir anar a explorar, però  {nom} es va perdre.
-    Va trobar una petita casa de fusta i va decidir entra a buscar ajuda.
-   Va picar a la porta, però va veure que era oberta.
+    Un dia {nom} estava acampant amb els seus amics al bosc. Tots van decidir anar a explorar, però {nom} es va perdre.
+    Va trobar una petita casa de fusta i va decidir entrar a buscar ajuda.
+    Va picar a la porta, però va veure que era oberta.
     Va entrar amb una mica de por.
-   Tot era fosc, i just quan va posar els dos peus a dins, la porta es va tancar a la seva esquena.
-    I, ara tu tens que ajudar a {nom} a sortir d'aquí. Bona sort! 
+    Tot era fosc, i just quan va posar els dos peus a dins, la porta es va tancar a la seva esquena.
+    I, ara tu tens que ajudar a {nom} a sortir d'aquí. Bona sort!
     """
-    
     print(historia)
-    
-def finalitzar_partida(game_id,nom):
-    
+
+
+def finalitzar_partida(game_id, nom):
     print(f"""
               {nom} surt corrents de la casa, feliç per haver aconseguit sortir senser d'allà.
               Corre pel bosc i aconsegueix trobar-se a els seus amics, que l'estaven buscant.
               Fi.""")
-    
+
     if not os.path.exists(NOM_FITXER):
         print(" No s'ha trobat el fitxer de la partida.")
         return
@@ -268,12 +255,10 @@ def finalitzar_partida(game_id,nom):
     with open(NOM_FITXER, "r") as f:
         dades_partida = json.load(f)
 
-    score = dades_partida.get("punts", 0)
-
     cos = {
         "game_id": game_id,
         "data": dades_partida,
-        "score": score
+        "score": dades_partida.get("punts", 0)
     }
 
     try:
@@ -285,6 +270,7 @@ def finalitzar_partida(game_id,nom):
     except requests.exceptions.RequestException as e:
         print(f" Error de connexió finalitzant la partida: {e}")
 
+
 def main():
     accio = mostrar_menu()
 
@@ -295,5 +281,7 @@ def main():
     else:
         print("Opció no vàlida.")
 
+
 if __name__ == "__main__":
     main()
+
