@@ -3,8 +3,11 @@ from tkinter import messagebox, simpledialog
 from PIL import Image, ImageTk
 import json
 import os
+import requests
+import threading
 
-NOM_FITXER = "jugador.json"  
+NOM_FITXER = "jugador.json"
+SERVER_BASE_URL = "https://fun.codelearn.cat/hackathon/game"
 
 class ScapeRoomApp(tk.Tk):
     def __init__(self):
@@ -15,7 +18,8 @@ class ScapeRoomApp(tk.Tk):
         self.score = 0
         self.nom_jugador = ""
         self.game_id = None
-        self.estat_joc = "menu"  
+        self.estat_joc = "menu" 
+
         self.frame_imatge = tk.Label(self)
         self.frame_imatge.pack(pady=10)
 
@@ -30,12 +34,18 @@ class ScapeRoomApp(tk.Tk):
 
         self.boto_nova_partida = tk.Button(self, text="Nova Partida", command=self.iniciar_nova_partida)
         self.boto_sortir = tk.Button(self, text="Sortir", command=self.destroy)
+
         self.boto_nova_partida.pack(side="left", padx=20, pady=20)
         self.boto_sortir.pack(side="right", padx=20, pady=20)
+
         self.imatges = {}
         self.carregar_imatges()
+
         self.entry_resposta.pack_forget()
         self.boto_confirmar.pack_forget()
+
+        self.progress_thread = None
+        self.stop_progress_thread = False
 
     def carregar_imatges(self):
         noms_imatges = {
@@ -59,7 +69,7 @@ class ScapeRoomApp(tk.Tk):
     def mostrar_imatge(self, nom):
         img = self.imatges.get(nom)
         if img:
-            self.frame_imatge.config(image=img)
+            self.frame_imatge.config(image=img, text="")
             self.frame_imatge.image = img
         else:
             self.frame_imatge.config(image="", text=f"No s'ha trobat la imatge {nom}")
@@ -68,6 +78,19 @@ class ScapeRoomApp(tk.Tk):
         self.nom_jugador = simpledialog.askstring("Nom jugador", "Introdueix el teu nom:")
         if not self.nom_jugador:
             messagebox.showwarning("Atenció", "Has de posar un nom per continuar.")
+            return
+        
+        
+        try:
+            resposta = requests.get(f"{SERVER_BASE_URL}/new")
+            resposta.raise_for_status()
+            dades_resposta = resposta.json()
+            self.game_id = dades_resposta.get("game_id")
+            if not self.game_id:
+                messagebox.showerror("Error", "No s'ha pogut obtenir el game_id del servidor.")
+                return
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al comunicar-se amb el servidor: {e}")
             return
 
         self.score = 0
@@ -79,6 +102,32 @@ class ScapeRoomApp(tk.Tk):
         self.estat_joc = "historia"
         self.mostrar_historia()
 
+        
+        self.stop_progress_thread = False
+        self.progress_thread = threading.Thread(target=self.enviar_progresos_periodic, daemon=True)
+        self.progress_thread.start()
+
+    def enviar_progresos_periodic(self):
+        import time
+        while not self.stop_progress_thread:
+            self.enviar_progress()
+            time.sleep(10)
+
+    def enviar_progress(self):
+        if not self.game_id:
+            return
+        dades_partida = {
+            "nom_jugador": self.nom_jugador,
+            "score": self.score,
+            "estat_joc": self.estat_joc,
+        }
+        try:
+            resp = requests.post(f"{SERVER_BASE_URL}/store_progress",
+                                 json={"game_id": self.game_id, "data": dades_partida})
+            resp.raise_for_status()
+        except Exception as e:
+            print(f"Error enviant progrés al servidor: {e}")
+
     def mostrar_historia(self):
         text_historia = f"""
 Un dia {self.nom_jugador} estava acampant amb els seus amics al bosc. Tots van decidir anar a explorar, però {self.nom_jugador} es va perdre.
@@ -86,7 +135,7 @@ Va trobar una petita casa de fusta i va decidir entrar a buscar ajuda.
 Va picar a la porta, però va veure que era oberta.
 Va entrar amb una mica de por.
 Tot era fosc, i just quan va posar els dos peus a dins, la porta es va tancar a la seva esquena.
-I, ara tu has de ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
+I, ara tu tens que ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
 """
         self.mostrar_imatge("intro")
         self.text_label.config(text=text_historia.strip())
@@ -139,7 +188,7 @@ I, ara tu has de ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
         ))
         self.entry_resposta.delete(0, tk.END)
         self.intents_historia = 1
-        self.etapa_historia = "america"  
+        self.etapa_historia = "america"
 
     def problema4(self):
         self.estat_joc = "problema4"
@@ -183,7 +232,7 @@ I, ara tu has de ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
                     messagebox.showwarning("Pista", pista)
                 else:
                     messagebox.showwarning("Incorrecte", "No és correcte i no hi ha més pistes.")
-                self.score += 0 
+                self.score += 0
                 self.guardar_puntuacio()
 
         elif self.estat_joc == "problema3":
@@ -256,6 +305,7 @@ I, ara tu has de ajudar a {self.nom_jugador} a sortir d'aquí. Bona sort!
             json.dump(dades, f)
 
     def finalitzar_partida(self):
+        self.stop_progress_thread = True  
         self.entry_resposta.pack_forget()
         self.boto_confirmar.pack_forget()
         text = f"""
@@ -264,12 +314,24 @@ Corre pel bosc i aconsegueix trobar-se amb els seus amics, que l'estaven buscant
 Fi.
 Has aconseguit {self.score} punts!
 """
-               
         self.mostrar_imatge(None)
         self.text_label.config(text=text.strip())
+
+        
+        dades_partida = {
+            "nom_jugador": self.nom_jugador,
+            "score": self.score,
+            "estat_joc": self.estat_joc,
+        }
+        try:
+            resp = requests.post(f"{SERVER_BASE_URL}/finalize",
+                                 json={"game_id": self.game_id, "data": dades_partida, "score": self.score})
+            resp.raise_for_status()
+        except Exception as e:
+            print(f"Error notificació finalització al servidor: {e}")
+
         boto_sortir_final = tk.Button(self, text="Sortir", command=self.destroy)
         boto_sortir_final.pack(pady=20)
-
 
 if __name__ == "__main__":
     app = ScapeRoomApp()
