@@ -44,3 +44,25 @@ def problema2():
                 print("No hi ha més pistes disponibles")
                 resposta = input("Resposta: ")
         print("Molt bé, passes a la següent sala!")
+
+def problema3():
+    print("Heu entrat a la sala d'història")
+    print("Sabeu quin any es ve descobrir Amèrica, quin?")
+    resposta = input("Resposta: ")
+    if resposta == "1492":
+        print("Tu no seràs un expert en història, no?")
+    else:
+        while(resposta != "1492"):
+            print("Torna a intentar!")
+            resposta = input("Resposta: ")
+        print("Molt Bé")
+    print("Quin any va ser la revolució francesa?")
+    respostaf = input("Resposta: ")
+    if respostaf == "1789":
+        print("Fàcil?")
+        print("Ara passaràs a la següent sala")
+    else:
+        while(respostaf != "1789"):
+            print("Torna a intentar!")
+            respostaf = input("Resposta: ")
+        print("Molt Bé")
