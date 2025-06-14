@@ -31,9 +31,8 @@ def enviar_progress(game_id, dades_partida):
     try:
         resposta = requests.post(POST_URL, json=cos)
         if resposta.status_code == 200:
-            print(f"✅")
-        else:
-            print(f"⚠️")
+            print(f"")
+
     except requests.exceptions.RequestException as e:
         print(f"❌ Error de connexió enviant progrés: {e}")
         
