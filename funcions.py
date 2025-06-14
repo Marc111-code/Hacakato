@@ -67,7 +67,6 @@ def problema3():
     else:
         print("Molt Bé")
         score += 1
-
     respostaf = input("Quin any va ser la revolució francesa? ")
     intents = 1
     while respostaf != "1789":
@@ -80,5 +79,37 @@ def problema3():
     else:
         print("Molt Bé")
         score += 1
-
     print("Ara passaràs a la següent sala")
+
+def problema4():
+    global score
+    print("Quin gas és el més abundant a l’atmosfera terrestre?")
+    resposta = input("Resposta: ")
+    if resposta in ["nitrogen", "Nitrogen", "NITROGEN"]:
+        print("Mare meva que bo!")
+        score += 3
+        print("Passes a la ultima sala")
+    else:
+        while resposta not in ["nitrogen", "Nitrogen", "NITROGEN"]:
+            print("Torna a intentar!")
+            resposta = input("Resposta: ")
+        print("Molt Bé")
+        print("Passes a la última sala")
+        score += 1
+
+
+def problema5():
+    global score
+    print("Quin planeta és conegut com el planeta vermell?")
+    resposta = input("Resposta: ")
+    if resposta in ["mart", "Mart", "MART"]:
+        print("Super Bè")
+        print("Has aconseguit escapar")
+        score += 3
+    else:
+        while resposta not in ["Mart", "MART", "mart"]:
+            print("Torna a intentar!")
+            resposta = input("Resposta: ")
+        print("Molt Bé")
+        print("Has aconseguit escapar!")
+        score += 1
