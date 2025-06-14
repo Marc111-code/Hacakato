@@ -31,11 +31,12 @@ def enviar_progress(game_id, dades_partida):
     try:
         resposta = requests.post(POST_URL, json=cos)
         if resposta.status_code == 200:
-            print(f"✅ Progrés enviat correctament a {POST_URL}")
+            print(f"✅")
         else:
-            print(f"⚠️ Error enviant progrés: codi {resposta.status_code}")
+            print(f"⚠️")
     except requests.exceptions.RequestException as e:
         print(f"❌ Error de connexió enviant progrés: {e}")
+        
 
 def loop_enviar_progress(game_id):
     """
@@ -61,6 +62,8 @@ def loop_enviar_progress(game_id):
 def iniciar_nova_partida():
     nom = input("👤 Introdueix el teu nom: ").strip()
     print(f"\n🆕 Iniciant nova partida per {nom}...")
+    
+    
 
     dades_jugador = {
         "nom": nom,
@@ -79,32 +82,30 @@ def iniciar_nova_partida():
         if resposta.status_code == 200:
             dades = resposta.json()
             print("✅ Nova partida iniciada correctament.")
-            print("📦 Resposta del servidor:")
-            print(dades)
+            
+            mostrar_historia(nom)
 
             
             game_id = dades.get("game_id")
             if not game_id:
-                print("⚠️ No s'ha trobat 'game_id' a la resposta. Assignant 999999 per defecte.")
                 game_id = 999999
 
             
             fil = threading.Thread(target=loop_enviar_progress, args=(game_id,), daemon=True)
             fil.start()
 
-            print("\n⏳ Estàs jugant... prem Enter per parar i sortir.")
-            input()  
+             
 
             
             global enviant_progres
             enviant_progres = False
             fil.join()
-            print("🔴 Progrés aturat. Fins aviat!")
 
         else:
             print(f"⚠️ Error en iniciar la partida. Codi: {resposta.status_code}")
     except requests.exceptions.RequestException as e:
         print(f"❌ Error de connexió: {e}")
+        
 
 def continuar_partida():
     if not os.path.exists(NOM_FITXER):
@@ -117,6 +118,18 @@ def continuar_partida():
     print(f"\n🔄 Continuant partida per {dades_jugador['nom']}...")
     print(f"Punts: {dades_jugador.get('punts', 0)}")
     print(f"Nivell: {dades_jugador.get('nivell', 1)}")
+
+def mostrar_historia(nom):
+    historia = f"""
+    Un dia {nom} estava acampant amb els seus amics al bosc. Tots van decidir anar a explorar, però  {nom} es va perdre.
+    Va trobar una petita casa de fusta i va decidir entra a buscar ajuda.
+   Va picar a la porta, però va veure que era oberta.
+    Va entrar amb una mica de por.
+   Tot era fosc, i just quan va posar els dos peus a dins, la porta es va tancar a la seva esquena.
+    I, ara tu tens que ajudar a {nom} a sortir d'aquí. Bona sort! 
+    """
+    
+    print(historia)
 
 def main():
     accio = mostrar_menu()
